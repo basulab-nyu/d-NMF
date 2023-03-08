@@ -10,7 +10,7 @@
         % An ImageJ-style roi filename will be automatically generated and append to this path.
 
 function writeImageJROI_3(matlabpathcoors, method, z, roi_name, folder)
-
+    % writeImageJROI_3(matlabpathcoors, method, z, roi_name, folder)
     ch = 0;
 %     z = 0;
     t = z;
@@ -18,7 +18,7 @@ function writeImageJROI_3(matlabpathcoors, method, z, roi_name, folder)
     % -- A table array template that holds default parameters, describes data types, and describes the correspondence btwn matlab and java data
     % ROI-specific data is added to this table.
     % See Matlab_writeIJROI_Function_Description.docx for a complete description of ROI_FILE_DATA.mat
-    load('ROI_FILE_DATA');
+    load('ROI_FILE_DATA','ROI_FILE_DATA');
 
     % -- Processes a Matlab coordinate list into the IJ ROI list format
     % Eg. finds bounding box, converts to relative coordinate system, puts coordinates in proper order  
@@ -196,8 +196,8 @@ function writeroidata(ROI_FILE_DATA,fileID,machinefmt)
             swch = 1;
         end
         
-        % Writting of rows where data is a scalar
-        % swch ensures this only occurs if data was not already written above...
+        % Writing of rows where data is a scalar
+        % ensures this only occurs if data was not already written above...
             % i.e. data is only written once for each row 
         if swch == 0
             fwrite(fileID,ROI_FILE_DATA.integer_data{i},ROI_FILE_DATA.matlab_type{i},skip,machinefmt);

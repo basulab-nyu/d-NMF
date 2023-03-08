@@ -20,7 +20,7 @@ options.overlapThr = 0.5;           % Spatial overlap merge threshold
 options.sizeRange = [30 2000];      % Allowable size range of valid ROIs
 options.eta = 0.01;                 % Temporal regularization weight
 options.beta = 0.5;                 % Spatial regularization weight
-options.med_opt = false;
+options.med_opt = false;            % Option to compute baseline fluoresence as median rather than minimum. Recommended for non-downsampled data
 
 % ROI cleanup parameters
 options.thr_method = 'quant';       % Method of thresholding ROIs: 'max' or 'quant'
@@ -31,10 +31,10 @@ options.final_C = true;             % Whether or not to recompute traces C after
 % ROI validity & merging parameters
 options.minSkew = 0;                % Minimum skew of temporal trace of valid ROIs
 options.shapeThr = 0.5;             % Correlation threshold for ROIs
-options.temporalCorrThr = 0.9;     % Temporal correlation merge threshold 
+options.temporalCorrThr = 0.9;      % Temporal correlation merge threshold 
 
 
-tempFolder = '.';
+tempFolder = '.';                   % Temporary folder to write ROIs to before zipping them up to target folder
 for i_file = length(files)
     thisFile = files{i_file};
     

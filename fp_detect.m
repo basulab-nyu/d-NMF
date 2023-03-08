@@ -1,5 +1,6 @@
 function [eventStartStop, eventPeakLocation, eventAmp, eventWidth] = fp_detect(Y, dt, minHeight)
-
+    % [eventStartStop, eventPeakLocation, eventAmp, eventWidth] = fp_detect(Y, dt, minHeight)
+    
     Y = zscore(Y);
     startStopPositive = j_event_detect(Y, minHeight, 0.5);
     startStopNegative = j_event_detect(-Y, minHeight, 0.5);

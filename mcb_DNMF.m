@@ -1,42 +1,42 @@
 function [cROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, options)
-    % [ROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, options)
+    % [cROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, options)
+    
+    % Load in Video
     fileName = path_to_video;
     Y = bigread2(fileName,1);
-%     Y = double(Y);
+    
+    % Set saturated pixels to 0
     Y(Y>options.maxVal) = 0;
     
     tStart = tic;
-    [szA, szB, nFrames] = size(Y);
+    [szA, szB, ~] = size(Y);
     
     if(nargin<2)
         options = defaultOptions_mcbDNMF();
     end
     
-    thr = options.thr;
-    patchSize = options.patchSize;
-    stride = options.stride;
-    overlapThr = options.overlapThr;
     temporalCorrThr = options.temporalCorrThr;
     minSkew = options.minSkew;
     sizeRange = options.sizeRange;
         
-%     [cROIs0, Cs0, coherence0, skew0, sz0] = DNMF_General3(Y, thr, patchSize, stride, overlapThr, sizeRange);
+    
+    % Detect ROIs in patches
     [cROIs0, Cs0, coherence0, skew0, sz0] = DNMF_General3(Y, options);
     
-    fprintf('Merging ROIs...');
     valid = skew0>minSkew & isbetween(sz0,sizeRange(1),sizeRange(2));
     cROIs1 = cROIs0(:,valid);
     Cs1 = Cs0(valid,:);
-    coherence1 = coherence0(valid);
-    skew1 = skew0(valid);
-    sz1 = sz0(valid);
     
-%     ROIs1 = reshape(full(cROIs1),[szA, szB, size(cROIs1,2)]);    
-
     
-    %%
+    
+    %% Merge ROIs
+    fprintf('Merging ROIs...');
+    
+    % De-trend and z-score to compute temporal correlation
     Cs1b = (j_detrend2b(Cs1,options.DETREND_FRAMES,2,false));
     zCs = zscore(Cs1b,[],2);
+    
+    % Compute spatial overlap
     cROIs_binary = double(cROIs1>0);
     spatialOverlap_0 = cROIs_binary'*cROIs_binary;
     sizes = sum(cROIs_binary);
@@ -49,46 +49,46 @@ function [cROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, op
     spatialOverlap = spatialOverlap_0./minSize;
     temporalCorr = zCs*zCs'/(size(zCs,2)-1);
     
+    % Find connected components of the graph
     linked = (spatialOverlap>0) & (temporalCorr>temporalCorrThr);    
-    [SSS,CCC] = graphconncomp(sparse(linked));
+    [~,connComp] = graphconncomp(sparse(linked));
 
-    
-    cROIs = sparse(szA*szB, max(CCC));
-    Cs = zeros(max(CCC), size(Cs1,2));
-    coherence = NaN(max(CCC),1);
-    skew = NaN(max(CCC),1);
-    sz = NaN(max(CCC),1);
-    for ii=1:max(CCC)
-        these = CCC==ii; 
-        if(sum(these)>1)
-            r = cROIs1(:,these);
-%             r = reshape(ROIs1(:,:,these),512*512,[]);
-            c = Cs1(these,:);
-            mc = max(c,[],2);
-            r2 = bsxfun(@times,r,mc');
-            temp = max(r2,[],2);
+    % Merge ROIs that are part of connected components
+    cROIs = sparse(szA*szB, max(connComp));
+    Cs = zeros(max(connComp), size(Cs1,2));
+    coherence = NaN(max(connComp),1);
+    skew = NaN(max(connComp),1);
+    sz = NaN(max(connComp),1);
+    for i_component=1:max(connComp)
+        these = connComp==i_component; 
+        if(sum(these)==1)                   % Connected components with a single member
+            cROIs(:,i_component) = cROIs1(:,these);
+            Cs(i_component,:) = Cs1(these,:);
+        else                                % Connected components with multiple members
+            rois = cROIs1(:,these);
+            traces = Cs1(these,:);
+            maxTraces = max(traces,[],2);
+            rois2 = bsxfun(@times,rois,maxTraces');      % Scale ROIs by the maximum value of their temporal trace
+            temp = max(rois2,[],2);
             n = sqrt(sum(temp.^2));
-            temp = temp/n;
-            q = find(these);
-            validPixels = temp>0;
-            v = zeros(sum(validPixels),size(Cs,2));
-            for i_part = 1:length(q)
-                v = max(v, r(validPixels,i_part)*c(i_part,:));                
-            end
-            c = temp(validPixels)\v;
+            temp = temp/n;                  % New ROI is the maximum of member ROIs, normalized to have length 1
+            cROIs(:,i_component) = temp;
             
-            cROIs(:,ii) = temp;
-%             ROIs(:,:,ii) = reshape(temp,[szA szB]);
-            Cs(ii,:) = c;
-        else
-            cROIs(:,ii) = cROIs1(:,these);
-%             ROIs(:,:,ii) = ROIs1(:,:,these);
-            Cs(ii,:) = Cs1(these,:);
+            indices = find(these);
+            validPixels = temp>0;
+            values = zeros(sum(validPixels),size(Cs,2));
+            for i_part = 1:length(indices)
+                values = max(values, rois(validPixels,i_part)*traces(i_part,:));                
+            end
+            traces = temp(validPixels)\values;        % Solve for temporal component that best represents the new ROI
+            
+            
+            Cs(i_component,:) = traces;
         end
-        [ch, sk, z] = evaluateROIs(cROIs(:,ii), Cs(ii,:),[szA szB]);
-        coherence(ii) = ch;
-        skew(ii) = sk;
-        sz(ii) = z;
+        [ch, sk, z] = evaluateROIs(cROIs(:,i_component), Cs(i_component,:),[szA szB]);
+        coherence(i_component) = ch;
+        skew(i_component) = sk;
+        sz(i_component) = z;
     end
    
     tElapsed = toc(tStart);

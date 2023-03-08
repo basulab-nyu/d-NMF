@@ -1,5 +1,7 @@
 function [A2, C2] = component_split(A, C, shape, minSize, maxSize)
-
+    % [A2, C2] = component_split(A, C, shape, minSize, maxSize)
+    % Splits ROIs into connected components
+    
     if(nargin<5)
         maxSize = Inf;
     end
