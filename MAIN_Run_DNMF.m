@@ -1,9 +1,7 @@
 clear;
 addpath(genpath('.'));
 %% Set file path
-files = {   'H:\MATLAB\Moore_2023_Code\DNMF_Alpha\Data\495\D02\495D2G._Tsub_mean.tif'};
-        
-%%
+files = {   'C:\Users\Jason\Documents\MATLAB\DNMF_Review-main\Data\61\61D5._Tsub_mean'};
 
 %% Set options
 options.maxVal = 2^13;              % Maximum pixel intensity. Set anything above to 0
