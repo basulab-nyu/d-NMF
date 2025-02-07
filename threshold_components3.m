@@ -81,7 +81,7 @@ function Ath = threshold_components3(A,options)
                 valf{i} = 0;
             end
         elseif strcmpi(options.thr_method,'quant')
-            A_temp(A_temp<quantile(A_temp(:),options.quantileThr)) = 0;
+            A_temp(A_temp<=quantile(A_temp(:),options.quantileThr)) = 0;
             BW = imclose(A_temp>0,options.clos_op);
             if options.conn_comp
                 BW = bwareafilt(BW,1);            

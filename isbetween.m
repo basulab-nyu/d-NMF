@@ -1,5 +1,5 @@
-function [out] = isbetween(numbers,low,high)
-    % [out] = isbetween(numbers,low,high)
+function [out] = isbetween(numbers, low, high)
+    % [out] = isbetween(numbers, low, high)
     if(isempty(low))
         out = (zeros(size(numbers))==1)';        
     else

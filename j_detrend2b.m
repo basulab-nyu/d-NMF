@@ -1,8 +1,17 @@
 function [Y_out, Y0] = j_detrend2b(Y_in, L, dim, norm_opt, med_opt)
-    % [Y_out] = j_detrend(Y_in, L, dim, norm_opt, med_opt)
-    % L: Number of frames
-    % dim: dimension across which to roll
-    
+    % [Y_out, Y0] = j_detrend2b(Y_in, L, dim, norm_opt, med_opt)
+    % Input
+    % L: Number of frames over which to compute moving baseline Y0
+    % dim: Dimension across which to compute Y0
+    % norm_opt: Option to compute output as (Y-Y0)/Y0 (true) or (Y-Y0)
+    % (false)
+    % med_opt: Option to compute Y0 as rolling median (true) or minimum
+    % (false)
+    % Output
+    % Y_out: Detrended version of Y_in
+    % Y0: Moving baseline
+    %
+    % Jason Moore, 2025
     if(nargin<5)
         med_opt = false;
     end
